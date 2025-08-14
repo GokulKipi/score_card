@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gully Cricket Scorecard</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Font - Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <!-- Chart.js for the runs per over graph -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+      body {
+        font-family: "Inter", sans-serif;
+        background-color: #f3f4f6;
+      }
+
+      /* Animation for the balls in the timeline */
+      @keyframes popIn {
+        0% {
+          transform: scale(0);
+          opacity: 0;
+        }
+        80% {
+          transform: scale(1.1);
+          opacity: 1;
+        }
+        100% {
+          transform: scale(1);
+          opacity: 1;
+        }
+      }
+      .animate-pop {
+        animation: popIn 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+      }
+    </style>
+  </head>
+  <body
+    class="flex items-center justify-center min-h-screen p-4 md:p-8 bg-gray-100"
+  >
+    <!-- Main App Container -->
+    <div
+      class="w-full max-w-2xl bg-white p-6 rounded-3xl shadow-xl border border-gray-200"
+    >
+      <!-- Header -->
+      <header class="text-center mb-6">
+        <h1 class="text-3xl md:text-4xl font-bold text-gray-800">
+          Gully Cricket Scorecard
+        </h1>
+      </header>
+
+      <!-- Score Display -->
+      <div class="grid grid-cols-2 gap-4 text-center mb-6">
+        <!-- Team 1 Score -->
+        <div
+          id="team1-scorecard"
+          class="bg-blue-500 text-white p-4 rounded-2xl shadow-lg transition-all duration-300 transform hover:scale-105"
+        >
+          <input
+            type="text"
+            id="team1-name-input"
+            class="text-xl md:text-2xl font-bold mb-2 bg-transparent text-white text-center w-full"
+            value="Team A"
+          />
+          <div class="flex items-center justify-center space-x-4">
+            <span id="team1-runs" class="text-4xl md:text-5xl font-extrabold"
+              >0</span
+            >
+            <span class="text-4xl md:text-5xl font-thin">/</span>
+            <span id="team1-wickets" class="text-4xl md:text-5xl font-extrabold"
+              >0</span
+            >
+          </div>
+        </div>
+
+        <!-- Team 2 Score -->
+        <div
+          id="team2-scorecard"
+          class="bg-green-500 text-white p-4 rounded-2xl shadow-lg transition-all duration-300 transform hover:scale-105"
+        >
+          <input
+            type="text"
+            id="team2-name-input"
+            class="text-xl md:text-2xl font-bold mb-2 bg-transparent text-white text-center w-full"
+            value="Team B"
+          />
+          <div class="flex items-center justify-center space-x-4">
+            <span id="team2-runs" class="text-4xl md:text-5xl font-extrabold"
+              >0</span
+            >
+            <span class="text-4xl md:text-5xl font-thin">/</span>
+            <span id="team2-wickets" class="text-4xl md:text-5xl font-extrabold"
+              >0</span
+            >
+          </div>
+        </div>
+      </div>
+
+      <!-- Match Info & Settings -->
+      <div
+        class="flex flex-col md:flex-row items-center justify-between text-gray-700 mb-6 space-y-4 md:space-y-0"
+      >
+        <div class="text-center md:text-left">
+          <p class="text-lg md:text-xl font-semibold">
+            Overs: <span id="overs" class="font-bold">0.0</span> of
+            <span id="total-overs-display" class="font-bold">0</span>
+          </p>
+          <p class="text-sm text-gray-500 mt-1" id="current-inning-text">
+            Inning 1 is in progress
+          </p>
+          <p
+            class="text-sm text-gray-500 mt-1 hidden"
+            id="target-score-display"
+          >
+            Target: <span id="target-runs" class="font-bold">0</span>
+          </p>
+        </div>
+        <div class="text-center md:text-right">
+          <label
+            for="max-overs-input"
+            class="block text-sm font-medium text-gray-700"
+            >Set Match Overs:</label
+          >
+          <input
+            type="number"
+            id="max-overs-input"
+            value="10"
+            min="1"
+            class="mt-1 block w-24 rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-center"
+          />
+        </div>
+      </div>
+
+      <!-- Game Over Message Box -->
+      <div
+        id="game-over-message"
+        class="hidden text-center p-4 rounded-xl shadow-md bg-white border-2 border-red-500 mb-6"
+      >
+        <p id="game-over-text" class="text-xl font-bold text-red-700"></p>
+      </div>
+
+      <!-- Action Buttons -->
+      <div
+        class="bg-gray-100 p-4 rounded-2xl shadow-inner border border-gray-200"
+      >
+        <h3 class="text-center text-xl font-bold text-gray-700 mb-4">
+          Actions
+        </h3>
+        <!-- Runs -->
+        <div class="grid grid-cols-3 gap-2 mb-4">
+          <button
+            onclick="addRun(0)"
+            class="bg-gray-400 text-white font-bold py-3 px-4 rounded-xl shadow-md hover:bg-gray-500 transition-colors"
+          >
+            0
+          </button>
+          <button
+            onclick="addRun(1)"
+            class="bg-gray-400 text-white font-bold py-3 px-4 rounded-xl shadow-md hover:bg-gray-500 transition-colors"
+          >
+            1
+          </button>
+          <button
+            onclick="addRun(2)"
+            class="bg-gray-400 text-white font-bold py-3 px-4 rounded-xl shadow-md hover:bg-gray-500 transition-colors"
+          >
+            2
+          </button>
+          <button
+            onclick="addRun(3)"
+            class="bg-gray-400 text-white font-bold py-3 px-4 rounded-xl shadow-md hover:bg-gray-500 transition-colors"
+          >
+            3
+          </button>
+          <button
+            onclick="addRun(4)"
+            class="bg-yellow-500 text-white font-bold py-3 px-4 rounded-xl shadow-md hover:bg-yellow-600 transition-colors"
+          >
+            4
+          </button>
+          <button
+            onclick="addRun(6)"
+            class="bg-purple-500 text-white font-bold py-3 px-4 rounded-xl shadow-md hover:bg-purple-600 transition-colors"
+          >
+            6
+          </button>
+        </div>
+        <!-- Other actions -->
+        <div class="grid grid-cols-2 gap-2">
+          <button
+            onclick="addWicket()"
+            class="bg-red-500 text-white font-bold py-3 px-4 rounded-xl shadow-md hover:bg-red-600 transition-colors"
+          >
+            Wicket
+          </button>
+          <button
+            onclick="addExtra()"
+            class="bg-orange-500 text-white font-bold py-3 px-4 rounded-xl shadow-md hover:bg-orange-600 transition-colors"
+          >
+            Wide / No-ball
+          </button>
+          <button
+            onclick="undoLastAction()"
+            class="col-span-2 bg-gray-500 text-white font-bold py-3 px-4 rounded-xl shadow-md hover:bg-gray-600 transition-colors"
+          >
+            Undo
+          </button>
+        </div>
+        <div class="grid grid-cols-2 gap-2 mt-4">
+          <button
+            onclick="showNextInningModal()"
+            class="bg-teal-500 text-white font-bold py-3 px-4 rounded-xl shadow-md hover:bg-teal-600 transition-colors"
+          >
+            Next Inning
+          </button>
+          <button
+            onclick="showResetModal()"
+            class="bg-red-700 text-white font-bold py-3 px-4 rounded-xl shadow-md hover:bg-red-800 transition-colors"
+          >
+            Reset Game
+          </button>
+        </div>
+      </div>
+
+      <!-- Timeline and Graph Container -->
+      <div
+        class="mt-8 bg-gray-100 p-4 rounded-2xl shadow-inner border border-gray-200"
+      >
+        <h3 class="text-center text-xl font-bold text-gray-700 mb-4">
+          Game Progress
+        </h3>
+
+        <!-- Overs Timeline -->
+        <h4 class="text-lg font-semibold text-gray-600 mb-2">Overs Timeline</h4>
+        <div
+          id="overs-timeline-container"
+          class="flex overflow-x-auto gap-4 p-2 mb-6"
+        >
+          <!-- Timeline items will be injected here by JavaScript -->
+        </div>
+
+        <!-- Ball-by-ball timeline -->
+        <h4 class="text-lg font-semibold text-gray-600 mb-2">
+          Ball-by-ball Timeline
+        </h4>
+        <div
+          id="balls-timeline-container"
+          class="flex overflow-x-auto gap-1 p-2 mb-6 items-center"
+        >
+          <!-- Ball items will be injected here by JavaScript -->
+        </div>
+
+        <!-- Runs Per Over Graph -->
+        <h4 class="text-lg font-semibold text-gray-600 mb-2">Runs per Over</h4>
+        <div class="h-64">
+          <canvas id="runsPerOverChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal for Next Inning -->
+    <div
+      id="next-inning-modal"
+      class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center"
+    >
+      <div
+        class="bg-white p-6 rounded-2xl shadow-xl text-center max-w-sm mx-auto"
+      >
+        <h3 class="text-xl font-bold mb-4">Start Next Inning?</h3>
+        <p>
+          Are you sure you want to proceed to the next inning? This will lock
+          the current team's score.
+        </p>
+        <div class="mt-4 flex justify-around">
+          <button
+            onclick="nextInning()"
+            class="bg-teal-500 text-white font-bold py-2 px-4 rounded-xl hover:bg-teal-600"
+          >
+            Yes, Proceed
+          </button>
+          <button
+            onclick="hideNextInningModal()"
+            class="bg-gray-400 text-white font-bold py-2 px-4 rounded-xl hover:bg-gray-500"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal for Reset -->
+    <div
+      id="reset-modal"
+      class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center"
+    >
+      <div
+        class="bg-white p-6 rounded-2xl shadow-xl text-center max-w-sm mx-auto"
+      >
+        <h3 class="text-xl font-bold mb-4">Reset Game?</h3>
+        <p>
+          Are you sure you want to reset the entire game? All scores will be
+          cleared.
+        </p>
+        <div class="mt-4 flex justify-around">
+          <button
+            onclick="resetGame()"
+            class="bg-red-500 text-white font-bold py-2 px-4 rounded-xl hover:bg-red-600"
+          >
+            Yes, Reset
+          </button>
+          <button
+            onclick="hideResetModal()"
+            class="bg-gray-400 text-white font-bold py-2 px-4 rounded-xl hover:bg-gray-500"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Game state object, now includes ballsTimeline for detailed tracking
+      let state = {
+        team1: {
+          name: "Team A",
+          runs: 0,
+          wickets: 0,
+          oversTimeline: [],
+          ballsTimeline: [],
+        },
+        team2: {
+          name: "Team B",
+          runs: 0,
+          wickets: 0,
+          oversTimeline: [],
+          ballsTimeline: [],
+        },
+        currentInning: 1,
+        ballsInOver: 0,
+        totalOvers: 0,
+        scoreHistory: [],
+        currentOverRuns: 0,
+        currentOverWickets: 0,
+        maxOvers: 10,
+        targetScore: 0,
+        gameOver: false,
+      };
+
+      // DOM elements
+      const team1NameInput = document.getElementById("team1-name-input");
+      const team2NameInput = document.getElementById("team2-name-input");
+      const team1RunsEl = document.getElementById("team1-runs");
+      const team1WicketsEl = document.getElementById("team1-wickets");
+      const team2RunsEl = document.getElementById("team2-runs");
+      const team2WicketsEl = document.getElementById("team2-wickets");
+      const oversEl = document.getElementById("overs");
+      const currentInningTextEl = document.getElementById(
+        "current-inning-text"
+      );
+      const totalOversDisplay = document.getElementById("total-overs-display");
+      const maxOversInput = document.getElementById("max-overs-input");
+      const nextInningModal = document.getElementById("next-inning-modal");
+      const resetModal = document.getElementById("reset-modal");
+      const team1Scorecard = document.getElementById("team1-scorecard");
+      const team2Scorecard = document.getElementById("team2-scorecard");
+      const oversTimelineContainer = document.getElementById(
+        "overs-timeline-container"
+      );
+      const ballsTimelineContainer = document.getElementById(
+        "balls-timeline-container"
+      );
+      const runsPerOverChartCanvas =
+        document.getElementById("runsPerOverChart");
+      const gameOverMessage = document.getElementById("game-over-message");
+      const gameOverText = document.getElementById("game-over-text");
+      const targetScoreDisplay = document.getElementById(
+        "target-score-display"
+      );
+      const targetRunsEl = document.getElementById("target-runs");
+      let runsPerOverChart;
+
+      // Event listeners for team name and max overs
+      team1NameInput.addEventListener(
+        "change",
+        (e) => (state.team1.name = e.target.value)
+      );
+      team2NameInput.addEventListener(
+        "change",
+        (e) => (state.team2.name = e.target.value)
+      );
+      maxOversInput.addEventListener(
+        "change",
+        (e) => (state.maxOvers = parseInt(e.target.value, 10) || 0)
+      );
+
+      // Function to render the current state to the UI
+      function renderState() {
+        // Update team names
+        team1NameInput.value = state.team1.name;
+        team2NameInput.value = state.team2.name;
+
+        // Update active team highlighting
+        if (state.currentInning === 1) {
+          team1Scorecard.classList.remove("bg-gray-400");
+          team1Scorecard.classList.add("bg-blue-500");
+          team2Scorecard.classList.remove("bg-green-500");
+          team2Scorecard.classList.add("bg-gray-400");
+        } else {
+          team1Scorecard.classList.remove("bg-blue-500");
+          team1Scorecard.classList.add("bg-gray-400");
+          team2Scorecard.classList.remove("bg-gray-400");
+          team2Scorecard.classList.add("bg-green-500");
+        }
+
+        // Update scores
+        team1RunsEl.textContent = state.team1.runs;
+        team1WicketsEl.textContent = state.team1.wickets;
+        team2RunsEl.textContent = state.team2.runs;
+        team2WicketsEl.textContent = state.team2.wickets;
+
+        // Format overs display (e.g., 2.3)
+        const oversDisplay = `${state.totalOvers}.${state.ballsInOver}`;
+        oversEl.textContent = oversDisplay;
+        currentInningTextEl.textContent = `Inning ${state.currentInning} is in progress`;
+        totalOversDisplay.textContent = state.maxOvers;
+
+        // Show target score for the second inning
+        if (state.currentInning === 2) {
+          targetScoreDisplay.classList.remove("hidden");
+          targetRunsEl.textContent = state.targetScore;
+        } else {
+          targetScoreDisplay.classList.add("hidden");
+        }
+
+        // Handle game over state
+        if (state.gameOver) {
+          gameOverMessage.classList.remove("hidden");
+          gameOverText.textContent = getMatchResult();
+        } else {
+          gameOverMessage.classList.add("hidden");
+        }
+
+        // Render the timelines and chart
+        renderTimeline();
+        renderBallsTimeline();
+        updateChart();
+      }
+
+      // Add a run to the current inning
+      function addRun(runs) {
+        if (state.gameOver) return;
+        const currentTeam =
+          state.currentInning === 1 ? state.team1 : state.team2;
+        currentTeam.runs += runs;
+        state.ballsInOver++;
+        state.currentOverRuns += runs;
+        state.scoreHistory.push({ type: "run", runs: runs, team: currentTeam });
+        currentTeam.ballsTimeline.push({ type: "run", runs: runs });
+        checkOverCompletion();
+        checkMatchEnd();
+        renderState();
+      }
+
+      // Add a wicket to the current inning
+      function addWicket() {
+        if (state.gameOver) return;
+        const currentTeam =
+          state.currentInning === 1 ? state.team1 : state.team2;
+        currentTeam.wickets++;
+        state.ballsInOver++;
+        state.currentOverWickets++;
+        state.scoreHistory.push({ type: "wicket", team: currentTeam });
+        currentTeam.ballsTimeline.push({ type: "wicket" });
+        checkOverCompletion();
+        checkMatchEnd();
+        renderState();
+      }
+
+      // Add an extra (wide or no-ball)
+      function addExtra() {
+        if (state.gameOver) return;
+        const currentTeam =
+          state.currentInning === 1 ? state.team1 : state.team2;
+        currentTeam.runs++;
+        state.currentOverRuns++;
+        state.scoreHistory.push({ type: "extra", team: currentTeam });
+        currentTeam.ballsTimeline.push({ type: "extra" });
+        // Wide/No-ball does not count as a legal delivery, so ballsInOver is not incremented.
+        checkMatchEnd();
+        renderState();
+      }
+
+      // Undo the last action
+      function undoLastAction() {
+        if (state.scoreHistory.length === 0 || state.gameOver) {
+          return; // No actions to undo or game is over
+        }
+
+        const lastAction = state.scoreHistory.pop();
+        const currentTeam = lastAction.team;
+
+        // Remove the last ball from the detailed timeline
+        if (currentTeam.ballsTimeline.length > 0) {
+          currentTeam.ballsTimeline.pop();
+        }
+
+        if (lastAction.type === "run") {
+          currentTeam.runs -= lastAction.runs;
+          state.currentOverRuns -= lastAction.runs;
+          state.ballsInOver--;
+        } else if (lastAction.type === "wicket") {
+          currentTeam.wickets--;
+          state.currentOverWickets--;
+          state.ballsInOver--;
+        } else if (lastAction.type === "extra") {
+          currentTeam.runs--;
+          state.currentOverRuns--;
+        }
+
+        // If we undo a new over, revert to the previous over's state
+        if (state.ballsInOver < 0) {
+          state.ballsInOver = 5;
+          state.totalOvers--;
+          const lastOverData = currentTeam.oversTimeline.pop();
+          if (lastOverData) {
+            state.currentOverRuns = lastOverData.runs;
+            state.currentOverWickets = lastOverData.wickets;
+          }
+        }
+
+        renderState();
+      }
+
+      // Check if the over is complete and update state
+      function checkOverCompletion() {
+        if (state.ballsInOver === 6) {
+          const currentTeam =
+            state.currentInning === 1 ? state.team1 : state.team2;
+          currentTeam.oversTimeline.push({
+            runs: state.currentOverRuns,
+            wickets: state.currentOverWickets,
+          });
+
+          state.totalOvers++;
+          state.ballsInOver = 0;
+          state.currentOverRuns = 0;
+          state.currentOverWickets = 0;
+        }
+      }
+
+      // Check for game over conditions
+      function checkMatchEnd() {
+        if (state.currentInning === 1) {
+          // Inning 1 ends if overs are complete or 10 wickets are down
+          if (state.totalOvers >= state.maxOvers || state.team1.wickets >= 10) {
+            showNextInningModal();
+          }
+        } else if (state.currentInning === 2) {
+          // Inning 2 ends if overs are complete, 10 wickets are down, or the target is reached
+          if (
+            state.totalOvers >= state.maxOvers ||
+            state.team2.wickets >= 10 ||
+            state.team2.runs > state.targetScore
+          ) {
+            state.gameOver = true;
+          }
+        }
+      }
+
+      // Determine the match result and return a message
+      function getMatchResult() {
+        if (state.team2.runs > state.targetScore) {
+          return `${state.team2.name} wins by ${
+            10 - state.team2.wickets
+          } wickets!`;
+        } else if (state.team2.runs === state.targetScore) {
+          return `The match is a tie!`;
+        } else {
+          return `${state.team1.name} wins by ${
+            state.targetScore - state.team2.runs
+          } runs!`;
+        }
+      }
+
+      // Move to the next inning
+      function nextInning() {
+        hideNextInningModal();
+        if (state.currentInning === 1) {
+          // Set the target score
+          state.targetScore = state.team1.runs;
+          state.currentInning = 2;
+          state.ballsInOver = 0;
+          state.totalOvers = 0;
+          state.currentOverRuns = 0;
+          state.currentOverWickets = 0;
+        }
+        renderState();
+      }
+
+      // Reset the entire game
+      function resetGame() {
+        hideResetModal();
+        state = {
+          team1: {
+            name: "Team A",
+            runs: 0,
+            wickets: 0,
+            oversTimeline: [],
+            ballsTimeline: [],
+          },
+          team2: {
+            name: "Team B",
+            runs: 0,
+            wickets: 0,
+            oversTimeline: [],
+            ballsTimeline: [],
+          },
+          currentInning: 1,
+          ballsInOver: 0,
+          totalOvers: 0,
+          scoreHistory: [],
+          currentOverRuns: 0,
+          currentOverWickets: 0,
+          maxOvers: 10,
+          targetScore: 0,
+          gameOver: false,
+        };
+        renderState();
+      }
+
+      // Renders the overs timeline boxes
+      function renderTimeline() {
+        const currentTeamTimeline =
+          state.currentInning === 1
+            ? state.team1.oversTimeline
+            : state.team2.oversTimeline;
+        oversTimelineContainer.innerHTML = ""; // Clear previous timeline
+        currentTeamTimeline.forEach((over, index) => {
+          const overDiv = document.createElement("div");
+          overDiv.className =
+            "flex-shrink-0 bg-white border border-gray-300 rounded-lg p-2 text-center shadow-sm w-24";
+          overDiv.innerHTML = `
+                    <p class="text-sm font-bold text-gray-800">Over ${
+                      index + 1
+                    }</p>
+                    <p class="text-md text-gray-700 mt-1">${over.runs} runs, ${
+            over.wickets
+          } wkt</p>
+                `;
+          oversTimelineContainer.appendChild(overDiv);
+        });
+      }
+
+      // Renders the ball-by-ball timeline
+      function renderBallsTimeline() {
+        const currentTeamBallsTimeline =
+          state.currentInning === 1
+            ? state.team1.ballsTimeline
+            : state.team2.ballsTimeline;
+        ballsTimelineContainer.innerHTML = "";
+        currentTeamBallsTimeline.forEach((ball, index) => {
+          const ballDiv = document.createElement("div");
+          ballDiv.className =
+            "flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white animate-pop";
+
+          let ballText = "";
+          let bgColor = "bg-gray-400";
+
+          if (ball.type === "run") {
+            ballText = ball.runs;
+            if (ball.runs === 4) bgColor = "bg-yellow-500";
+            else if (ball.runs === 6) bgColor = "bg-purple-500";
+          } else if (ball.type === "wicket") {
+            ballText = "W";
+            bgColor = "bg-red-500";
+          } else if (ball.type === "extra") {
+            ballText = "E";
+            bgColor = "bg-orange-500";
+          }
+
+          ballDiv.textContent = ballText;
+          ballDiv.classList.add(bgColor);
+          ballsTimelineContainer.appendChild(ballDiv);
+
+          // Add a separator at the end of each over
+          if (
+            (index + 1) % 6 === 0 &&
+            index < currentTeamBallsTimeline.length - 1
+          ) {
+            const separator = document.createElement("div");
+            separator.className =
+              "flex-shrink-0 w-4 text-center font-bold text-gray-400";
+            separator.textContent = "-";
+            ballsTimelineContainer.appendChild(separator);
+          }
+        });
+      }
+
+      // Initializes the chart
+      function initializeChart() {
+        const ctx = runsPerOverChartCanvas.getContext("2d");
+        runsPerOverChart = new Chart(ctx, {
+          type: "line",
+          data: {
+            labels: [],
+            datasets: [
+              {
+                label: "Runs per Over",
+                data: [],
+                borderColor: "rgb(75, 192, 192)",
+                tension: 0.1,
+                fill: false,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              y: {
+                beginAtZero: true,
+              },
+            },
+          },
+        });
+      }
+
+      // Updates the chart with current data
+      function updateChart() {
+        const currentTeamTimeline =
+          state.currentInning === 1
+            ? state.team1.oversTimeline
+            : state.team2.oversTimeline;
+        const labels = currentTeamTimeline.map(
+          (_, index) => `Over ${index + 1}`
+        );
+        const data = currentTeamTimeline.map((over) => over.runs);
+
+        runsPerOverChart.data.labels = labels;
+        runsPerOverChart.data.datasets[0].data = data;
+        runsPerOverChart.update();
+      }
+
+      // Modal functions
+      function showNextInningModal() {
+        nextInningModal.classList.remove("hidden");
+      }
+
+      function hideNextInningModal() {
+        nextInningModal.classList.add("hidden");
+      }
+
+      function showResetModal() {
+        resetModal.classList.remove("hidden");
+      }
+
+      function hideResetModal() {
+        resetModal.classList.add("hidden");
+      }
+
+      // Initial setup
+      initializeChart();
+      renderState();
+    </script>
+  </body>
+</html>
