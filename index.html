@@ -39,6 +39,40 @@
       .animate-pop {
         animation: popIn 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
       }
+
+      /* Winning Celebration Animation */
+      @keyframes confetti {
+        0% {
+          transform: translateY(-100vh) rotate(0deg);
+          opacity: 1;
+        }
+        100% {
+          transform: translateY(100vh) rotate(720deg);
+          opacity: 0;
+        }
+      }
+
+      .celebration-bg {
+        position: relative;
+        overflow: hidden;
+      }
+
+      .celebration-bg::after {
+        content: "";
+        position: absolute;
+        top: -100vh;
+        left: 0;
+        width: 100%;
+        height: 200vh;
+        background: radial-gradient(
+          circle at top,
+          rgba(255, 255, 255, 0) 10%,
+          rgba(255, 255, 255, 0.2) 50%,
+          rgba(255, 255, 255, 0) 90%
+        );
+        animation: confetti 10s linear infinite;
+        pointer-events: none;
+      }
     </style>
   </head>
   <body
@@ -111,14 +145,8 @@
             Overs: <span id="overs" class="font-bold">0.0</span> of
             <span id="total-overs-display" class="font-bold">0</span>
           </p>
-          <p class="text-sm text-gray-500 mt-1" id="current-inning-text">
+          <p class="text-sm text-gray-500 mt-1" id="inning-status-text">
             Inning 1 is in progress
-          </p>
-          <p
-            class="text-sm text-gray-500 mt-1 hidden"
-            id="target-score-display"
-          >
-            Target: <span id="target-runs" class="font-bold">0</span>
           </p>
         </div>
         <div class="text-center md:text-right">
@@ -360,9 +388,7 @@
       const team2RunsEl = document.getElementById("team2-runs");
       const team2WicketsEl = document.getElementById("team2-wickets");
       const oversEl = document.getElementById("overs");
-      const currentInningTextEl = document.getElementById(
-        "current-inning-text"
-      );
+      const inningStatusText = document.getElementById("inning-status-text");
       const totalOversDisplay = document.getElementById("total-overs-display");
       const maxOversInput = document.getElementById("max-overs-input");
       const nextInningModal = document.getElementById("next-inning-modal");
@@ -379,25 +405,21 @@
         document.getElementById("runsPerOverChart");
       const gameOverMessage = document.getElementById("game-over-message");
       const gameOverText = document.getElementById("game-over-text");
-      const targetScoreDisplay = document.getElementById(
-        "target-score-display"
-      );
-      const targetRunsEl = document.getElementById("target-runs");
       let runsPerOverChart;
 
       // Event listeners for team name and max overs
-      team1NameInput.addEventListener(
-        "change",
-        (e) => (state.team1.name = e.target.value)
-      );
-      team2NameInput.addEventListener(
-        "change",
-        (e) => (state.team2.name = e.target.value)
-      );
-      maxOversInput.addEventListener(
-        "change",
-        (e) => (state.maxOvers = parseInt(e.target.value, 10) || 0)
-      );
+      team1NameInput.addEventListener("change", (e) => {
+        state.team1.name = e.target.value;
+        renderState();
+      });
+      team2NameInput.addEventListener("change", (e) => {
+        state.team2.name = e.target.value;
+        renderState();
+      });
+      maxOversInput.addEventListener("change", (e) => {
+        state.maxOvers = parseInt(e.target.value, 10) || 0;
+        renderState();
+      });
 
       // Function to render the current state to the UI
       function renderState() {
@@ -427,23 +449,41 @@
         // Format overs display (e.g., 2.3)
         const oversDisplay = `${state.totalOvers}.${state.ballsInOver}`;
         oversEl.textContent = oversDisplay;
-        currentInningTextEl.textContent = `Inning ${state.currentInning} is in progress`;
         totalOversDisplay.textContent = state.maxOvers;
 
-        // Show target score for the second inning
-        if (state.currentInning === 2) {
-          targetScoreDisplay.classList.remove("hidden");
-          targetRunsEl.textContent = state.targetScore;
+        // Update inning status text with run rate or required info
+        const currentTeam =
+          state.currentInning === 1 ? state.team1 : state.team2;
+        const currentRuns = currentTeam.runs;
+        const oversPlayed = state.totalOvers + state.ballsInOver / 6;
+
+        if (state.currentInning === 1) {
+          const currentRunRate =
+            oversPlayed > 0 ? (currentRuns / oversPlayed).toFixed(2) : "0.00";
+          inningStatusText.textContent = `Current Run Rate: ${currentRunRate}`;
         } else {
-          targetScoreDisplay.classList.add("hidden");
+          const requiredRuns = state.targetScore - currentRuns;
+          const ballsRemaining =
+            (state.maxOvers - state.totalOvers) * 6 - state.ballsInOver;
+          const requiredRunRate =
+            ballsRemaining > 0
+              ? ((requiredRuns / ballsRemaining) * 6).toFixed(2)
+              : "0.00";
+
+          inningStatusText.innerHTML = `
+                    Required Run Rate: <span class="font-bold">${requiredRunRate}</span>
+                    <br>Need <span class="font-bold">${requiredRuns}</span> runs from <span class="font-bold">${ballsRemaining}</span> balls
+                `;
         }
 
         // Handle game over state
         if (state.gameOver) {
           gameOverMessage.classList.remove("hidden");
+          gameOverMessage.classList.add("celebration-bg");
           gameOverText.textContent = getMatchResult();
         } else {
           gameOverMessage.classList.add("hidden");
+          gameOverMessage.classList.remove("celebration-bg");
         }
 
         // Render the timelines and chart
@@ -491,7 +531,6 @@
         state.currentOverRuns++;
         state.scoreHistory.push({ type: "extra", team: currentTeam });
         currentTeam.ballsTimeline.push({ type: "extra" });
-        // Wide/No-ball does not count as a legal delivery, so ballsInOver is not incremented.
         checkMatchEnd();
         renderState();
       }
@@ -592,8 +631,8 @@
       function nextInning() {
         hideNextInningModal();
         if (state.currentInning === 1) {
-          // Set the target score
-          state.targetScore = state.team1.runs;
+          // Set the target score to 1 more than Team 1's score
+          state.targetScore = state.team1.runs + 1;
           state.currentInning = 2;
           state.ballsInOver = 0;
           state.totalOvers = 0;
