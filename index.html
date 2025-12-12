@@ -2,30 +2,40 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Gully Cricket Scorecard</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap"
-      rel="stylesheet"
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
     />
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <title>Gully Cricket Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-      body {
-        font-family: "Inter", sans-serif;
-        background-color: #f3f4f6;
+      /* --- 1. ANIMATIONS --- */
+      @keyframes shake {
+        0%,
+        100% {
+          transform: translateX(0);
+        }
+        10%,
+        30%,
+        50%,
+        70%,
+        90% {
+          transform: translateX(-5px);
+        }
+        20%,
+        40%,
+        60%,
+        80% {
+          transform: translateX(5px);
+        }
       }
-
-      /* Animation for the balls in the timeline */
-      @keyframes popIn {
+      @keyframes pop-in {
         0% {
           transform: scale(0);
           opacity: 0;
         }
-        80% {
-          transform: scale(1.1);
+        60% {
+          transform: scale(1.2);
           opacity: 1;
         }
         100% {
@@ -33,971 +43,1067 @@
           opacity: 1;
         }
       }
-      .animate-pop {
-        animation: popIn 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+      @keyframes bar-grow {
+        from {
+          height: 0;
+        }
+        to {
+          height: var(--target-height);
+        }
       }
-
-      /* Winning Celebration Animation */
-      @keyframes confetti {
+      @keyframes slide-four {
         0% {
-          transform: translateY(-100vh) rotate(0deg);
+          transform: translateX(-100vw) skewX(-20deg);
+          opacity: 0;
+        }
+        50% {
+          transform: translateX(0) skewX(-20deg);
           opacity: 1;
         }
+        80% {
+          transform: translateX(0) skewX(0deg) scale(1.1);
+        }
         100% {
-          transform: translateY(100vh) rotate(720deg);
+          transform: translateX(100vw) skewX(20deg);
           opacity: 0;
         }
       }
-
-      .celebration-bg {
-        position: relative;
-        overflow: hidden;
+      @keyframes zoom-six {
+        0% {
+          transform: scale(0) rotate(-180deg);
+          opacity: 0;
+        }
+        50% {
+          transform: scale(1.5) rotate(0deg);
+          opacity: 1;
+        }
+        70% {
+          transform: scale(1.2) rotate(0deg);
+        }
+        100% {
+          transform: scale(3) opacity(0);
+        }
+      }
+      @keyframes wicket-anim {
+        0% {
+          transform: scale(1);
+          opacity: 0;
+        }
+        20% {
+          transform: scale(1.2) rotate(10deg);
+          opacity: 1;
+          color: #ef4444;
+        }
+        40% {
+          transform: scale(1.2) rotate(-10deg);
+        }
+        60% {
+          transform: scale(1.2) rotate(10deg);
+        }
+        100% {
+          transform: scale(0);
+          opacity: 0;
+        }
+      }
+      @keyframes confetti-fall {
+        0% {
+          transform: translateY(-10vh) rotate(0deg);
+          opacity: 1;
+        }
+        100% {
+          transform: translateY(110vh) rotate(720deg);
+          opacity: 0;
+        }
+      }
+      @keyframes trophy-pulse {
+        0% {
+          transform: scale(1);
+          filter: drop-shadow(0 0 10px gold);
+        }
+        50% {
+          transform: scale(1.1);
+          filter: drop-shadow(0 0 30px gold);
+        }
+        100% {
+          transform: scale(1);
+          filter: drop-shadow(0 0 10px gold);
+        }
       }
 
-      .celebration-bg::after {
+      /* --- UTILITIES --- */
+      .shake-screen {
+        animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+      }
+      .anim-four {
+        animation: slide-four 1.5s ease-in-out forwards;
+      }
+      .anim-six {
+        animation: zoom-six 1.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)
+          forwards;
+      }
+      .anim-wicket {
+        animation: wicket-anim 1.5s ease-in-out forwards;
+      }
+
+      .glass-panel {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+      }
+
+      .btn-3d {
+        transition: all 0.1s;
+        border-bottom-width: 4px;
+      }
+      .btn-3d:active {
+        transform: translateY(4px);
+        border-bottom-width: 0px;
+      }
+      .btn-3d:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+        border-bottom-width: 4px;
+        filter: grayscale(100%);
+      }
+
+      .confetti {
+        position: fixed;
+        top: -20px;
+        width: 15px;
+        height: 15px;
+        pointer-events: none;
+        z-index: 100;
+      }
+
+      /* Bar Chart Styles */
+      .bar-container {
+        display: flex;
+        align-items: flex-end;
+        height: 100%;
+        gap: 6px;
+        padding-bottom: 20px;
+        min-height: 60px;
+      }
+      .bar {
+        width: 18px;
+        background: linear-gradient(to top, #10b981, #34d399);
+        border-radius: 4px 4px 0 0;
+        position: relative;
+        animation: bar-grow 0.5s ease-out forwards;
+        min-height: 4px;
+        flex-shrink: 0;
+      }
+      .bar-label {
+        position: absolute;
+        bottom: -20px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 8px;
+        font-weight: bold;
+        color: #4b5563;
+      }
+      .bar-value {
+        position: absolute;
+        top: -14px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 9px;
+        font-weight: bold;
+        color: #10b981;
+      }
+      .bar.current {
+        background: linear-gradient(to top, #f59e0b, #fbbf24);
+      }
+
+      /* Stats List Styles */
+      .stats-list {
+        overflow-y: auto;
+        font-size: 11px;
+        height: 100%;
+      }
+      .stats-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 4px 0;
+        border-bottom: 1px solid #f3f4f6;
+      }
+      .stats-item:last-child {
+        border-bottom: none;
+      }
+
+      /* Timeline Marker */
+      .timeline-marker {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        margin: 0 6px;
+      }
+      .timeline-line {
+        height: 100%;
+        width: 2px;
+        background-color: #d1d5db;
+        position: relative;
+      }
+      .timeline-line::after {
         content: "";
         position: absolute;
-        top: -100vh;
-        left: 0;
-        width: 100%;
-        height: 200vh;
-        background: radial-gradient(
-          circle at top,
-          rgba(255, 255, 255, 0) 10%,
-          rgba(255, 255, 255, 0.2) 50%,
-          rgba(255, 255, 255, 0) 90%
-        );
-        animation: confetti 10s linear infinite;
-        pointer-events: none;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 6px;
+        height: 6px;
+        background-color: #9ca3af;
+        border-radius: 50%;
+      }
+
+      body {
+        touch-action: manipulation;
+      }
+      .hidden-screen {
+        display: none !important;
+      }
+
+      .overlay-txt-base {
+        font-black: true;
+        font-size: 8rem;
+        line-height: 1;
+        filter: drop-shadow(0 10px 10px rgba(0, 0, 0, 0.5));
+        font-style: italic;
+        font-weight: 900;
       }
     </style>
   </head>
   <body
-    class="flex items-center justify-center min-h-screen p-4 md:p-8 bg-gray-100"
+    class="bg-gradient-to-b from-emerald-900 to-green-800 h-[100dvh] font-sans text-gray-800 overflow-hidden selection:bg-green-300"
   >
     <div
-      class="w-full max-w-2xl bg-white p-6 rounded-3xl shadow-xl border border-gray-200"
+      id="event-overlay"
+      class="fixed inset-0 flex items-center justify-center pointer-events-none z-50 hidden bg-black/40 backdrop-blur-sm"
     >
-      <header class="text-center mb-6">
-        <h1 class="text-3xl md:text-4xl font-bold text-gray-800">
-          Gully Cricket Scorecard
+      <div id="event-text" class="overlay-txt-base"></div>
+    </div>
+
+    <div
+      id="winner-modal"
+      class="fixed inset-0 flex flex-col items-center justify-center z-[60] hidden bg-black/85 backdrop-blur-xl p-6"
+    >
+      <button
+        onclick="closeWinnerModal()"
+        class="absolute top-6 right-6 text-white/50 hover:text-white text-4xl font-bold"
+      >
+        &times;
+      </button>
+      <div class="text-8xl mb-4 animate-[trophy-pulse_2s_infinite]">🏆</div>
+      <h2
+        id="winner-title"
+        class="text-4xl md:text-6xl font-black text-yellow-400 text-center mb-4 drop-shadow-lg uppercase italic"
+      ></h2>
+      <p
+        id="winner-desc"
+        class="text-white text-xl md:text-2xl text-center mb-8 font-medium"
+      ></p>
+      <div class="flex flex-col gap-3 w-full max-w-xs">
+        <button
+          onclick="resetGame()"
+          class="w-full bg-white text-green-900 px-6 py-3 rounded-full font-bold text-lg hover:scale-105 transition shadow-[0_0_20px_rgba(255,255,255,0.5)]"
+        >
+          Play Again 🔄
+        </button>
+        <button
+          onclick="copyScore()"
+          class="w-full bg-green-600 text-white px-6 py-3 rounded-full font-bold text-lg hover:scale-105 transition"
+        >
+          Copy for WhatsApp 📱
+        </button>
+      </div>
+    </div>
+
+    <div id="confetti-container"></div>
+
+    <div id="main-container" class="max-w-md mx-auto h-full flex flex-col">
+      <header class="p-3 text-center shrink-0">
+        <h1
+          class="text-2xl font-black text-white italic tracking-wider opacity-90"
+        >
+          🏏 GULLY CRICKET <span class="text-yellow-400">PRO</span>
         </h1>
       </header>
 
-      <div id="start-screen-container" class="p-6">
-        <h2 class="text-2xl font-semibold text-gray-700 text-center mb-6">
-          Start a New Match
-        </h2>
-        <div class="space-y-4">
-          <div>
-            <label for="initial-team1-name" class="block text-sm font-medium"
-              >Team 1 Name</label
-            >
-            <input
-              type="text"
-              id="initial-team1-name"
-              value="Team A"
-              class="mt-1 block w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2"
-            />
-          </div>
-          <div>
-            <label for="initial-team2-name" class="block text-sm font-medium"
-              >Team 2 Name</label
-            >
-            <input
-              type="text"
-              id="initial-team2-name"
-              value="Team B"
-              class="mt-1 block w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2"
-            />
-          </div>
-          <div>
-            <label for="initial-max-overs" class="block text-sm font-medium"
-              >Set Match Overs</label
-            >
-            <input
-              type="number"
-              id="initial-max-overs"
-              value="10"
-              min="1"
-              class="mt-1 block w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2"
-            />
-          </div>
-          <button
-            id="start-game-button"
-            class="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-xl shadow-md hover:bg-blue-700 transition-colors"
-          >
-            Start Game
-          </button>
-        </div>
-      </div>
-
-      <div id="scorecard-container" class="hidden">
-        <div class="grid grid-cols-2 gap-4 text-center mb-6">
-          <div
-            id="team1-scorecard"
-            class="bg-blue-500 text-white p-4 rounded-2xl shadow-lg transition-all duration-300 transform hover:scale-105"
-          >
-            <input
-              type="text"
-              id="team1-name-input"
-              class="text-xl md:text-2xl font-bold mb-2 bg-transparent text-white text-center w-full"
-              value="Team A"
-            />
-            <div class="flex items-center justify-center space-x-4">
-              <span id="team1-runs" class="text-4xl md:text-5xl font-extrabold"
-                >0</span
-              >
-              <span class="text-4xl md:text-5xl font-thin">/</span>
-              <span
-                id="team1-wickets"
-                class="text-4xl md:text-5xl font-extrabold"
-                >0</span
-              >
-            </div>
-          </div>
-
-          <div
-            id="team2-scorecard"
-            class="bg-green-500 text-white p-4 rounded-2xl shadow-lg transition-all duration-300 transform hover:scale-105"
-          >
-            <input
-              type="text"
-              id="team2-name-input"
-              class="text-xl md:text-2xl font-bold mb-2 bg-transparent text-white text-center w-full"
-              value="Team B"
-            />
-            <div class="flex items-center justify-center space-x-4">
-              <span id="team2-runs" class="text-4xl md:text-5xl font-extrabold"
-                >0</span
-              >
-              <span class="text-4xl md:text-5xl font-thin">/</span>
-              <span
-                id="team2-wickets"
-                class="text-4xl md:text-5xl font-extrabold"
-                >0</span
-              >
-            </div>
-          </div>
-        </div>
-
+      <div
+        id="setup-screen"
+        class="flex-1 flex flex-col justify-center p-6 overflow-y-auto"
+      >
         <div
-          class="flex flex-col md:flex-row items-center justify-between text-gray-700 mb-6 space-y-4 md:space-y-0"
+          class="glass-panel rounded-2xl shadow-2xl p-6 animate-[pop-in_0.5s_ease-out]"
         >
-          <div class="text-center md:text-left">
-            <p class="text-lg md:text-xl font-semibold">
-              Overs: <span id="overs" class="font-bold">0.0</span> of
-              <span id="total-overs-display" class="font-bold">0</span>
-            </p>
-            <p class="text-sm text-gray-500 mt-1" id="inning-status-text">
-              Inning 1 is in progress
-            </p>
-          </div>
-          <div class="text-center md:text-right">
-            <label
-              for="max-overs-input"
-              class="block text-sm font-medium text-gray-700"
-              >Set Match Overs:</label
-            >
-            <input
-              type="number"
-              id="max-overs-input"
-              value="10"
-              min="1"
-              class="mt-1 block w-24 rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-center"
-            />
-          </div>
-        </div>
-
-        <div
-          id="game-over-message"
-          class="hidden text-center p-4 rounded-xl shadow-md bg-white border-2 border-red-500 mb-6"
-        >
-          <p id="game-over-text" class="text-xl font-bold text-red-700"></p>
-        </div>
-
-        <div
-          class="bg-gray-100 p-4 rounded-2xl shadow-inner border border-gray-200"
-        >
-          <h3 class="text-center text-xl font-bold text-gray-700 mb-4">
-            Actions
-          </h3>
-          <div class="grid grid-cols-3 gap-2 mb-4">
-            <button
-              onclick="addRun(0)"
-              class="bg-gray-400 text-white font-bold py-3 px-4 rounded-xl shadow-md hover:bg-gray-500 transition-colors"
-            >
-              0
-            </button>
-            <button
-              onclick="addRun(1)"
-              class="bg-gray-400 text-white font-bold py-3 px-4 rounded-xl shadow-md hover:bg-gray-500 transition-colors"
-            >
-              1
-            </button>
-            <button
-              onclick="addRun(2)"
-              class="bg-gray-400 text-white font-bold py-3 px-4 rounded-xl shadow-md hover:bg-gray-500 transition-colors"
-            >
-              2
-            </button>
-            <button
-              onclick="addRun(3)"
-              class="bg-gray-400 text-white font-bold py-3 px-4 rounded-xl shadow-md hover:bg-gray-500 transition-colors"
-            >
-              3
-            </button>
-            <button
-              onclick="addRun(4)"
-              class="bg-yellow-500 text-white font-bold py-3 px-4 rounded-xl shadow-md hover:bg-yellow-600 transition-colors"
-            >
-              4
-            </button>
-            <button
-              onclick="addRun(6)"
-              class="bg-purple-500 text-white font-bold py-3 px-4 rounded-xl shadow-md hover:bg-purple-600 transition-colors"
-            >
-              6
-            </button>
-          </div>
-          <div class="grid grid-cols-3 gap-2">
-            <button
-              onclick="addWicket()"
-              class="bg-red-500 text-white font-bold py-3 px-4 rounded-xl shadow-md hover:bg-red-600 transition-colors"
-            >
-              Wicket
-            </button>
-            <button
-              onclick="addExtra()"
-              class="bg-orange-500 text-white font-bold py-3 px-4 rounded-xl shadow-md hover:bg-orange-600 transition-colors"
-            >
-              Wide / No-ball
-            </button>
-            <button
-              onclick="addRunAndWicket()"
-              class="bg-red-800 text-white font-bold py-3 px-4 rounded-xl shadow-md hover:bg-red-900 transition-colors"
-            >
-              +1 Wicket
-            </button>
-          </div>
-          <div class="grid grid-cols-2 gap-2 mt-4">
-            <button
-              onclick="undoLastAction()"
-              class="col-span-2 bg-gray-500 text-white font-bold py-3 px-4 rounded-xl shadow-md hover:bg-gray-600 transition-colors"
-            >
-              Undo
-            </button>
-            <button
-              onclick="showNextInningModal()"
-              class="bg-teal-500 text-white font-bold py-3 px-4 rounded-xl shadow-md hover:bg-teal-600 transition-colors"
-            >
-              Next Inning
-            </button>
-            <button
-              onclick="showResetModal()"
-              class="bg-red-700 text-white font-bold py-3 px-4 rounded-xl shadow-md hover:bg-red-800 transition-colors"
-            >
-              Reset Game
-            </button>
-          </div>
-        </div>
-
-        <div
-          class="mt-8 bg-gray-100 p-4 rounded-2xl shadow-inner border border-gray-200"
-        >
-          <div class="mb-6">
-            <label class="block text-sm font-medium text-gray-700 mb-2"
-              >Shareable Link</label
-            >
-            <div class="flex items-center space-x-2">
+          <h2 class="text-center text-xl font-bold mb-6 text-green-800">
+            Match Setup
+          </h2>
+          <div class="space-y-4">
+            <div>
+              <label class="text-xs font-bold text-gray-500 uppercase ml-1"
+                >Team 1</label
+              >
               <input
                 type="text"
-                id="share-link-input"
-                class="flex-grow rounded-xl border-gray-300 shadow-sm bg-gray-200 p-2 text-sm"
-                readonly
+                id="t1-name"
+                value="Team A"
+                class="w-full bg-gray-100 border-2 border-gray-200 rounded-xl px-4 py-3 font-bold focus:outline-none focus:border-green-500 transition"
               />
-              <button
-                onclick="copyShareableLink()"
-                class="bg-gray-500 text-white font-bold py-2 px-4 rounded-xl hover:bg-gray-600 transition-colors text-sm"
+            </div>
+            <div>
+              <label class="text-xs font-bold text-gray-500 uppercase ml-1"
+                >Team 2</label
               >
-                Copy
-              </button>
+              <input
+                type="text"
+                id="t2-name"
+                value="Team B"
+                class="w-full bg-gray-100 border-2 border-gray-200 rounded-xl px-4 py-3 font-bold focus:outline-none focus:border-green-500 transition"
+              />
+            </div>
+            <div>
+              <label class="text-xs font-bold text-gray-500 uppercase ml-1"
+                >Overs</label
+              >
+              <input
+                type="number"
+                id="match-overs"
+                value="5"
+                min="1"
+                max="50"
+                class="w-full bg-gray-100 border-2 border-gray-200 rounded-xl px-4 py-3 font-bold focus:outline-none focus:border-green-500 transition"
+              />
+            </div>
+          </div>
+          <button
+            onclick="startGame()"
+            class="mt-8 w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white font-black text-xl py-4 rounded-xl shadow-lg btn-3d border-green-700"
+          >
+            START MATCH ▶
+          </button>
+        </div>
+      </div>
+
+      <div
+        id="game-screen"
+        class="hidden-screen flex-1 flex flex-col p-2 pb-safe overflow-hidden relative"
+      >
+        <div class="shrink-0">
+          <div class="grid grid-cols-2 gap-3 mb-2">
+            <div
+              id="card-team1"
+              class="glass-panel rounded-xl p-2 flex flex-col items-center justify-center border-b-4 border-transparent transition-all duration-300"
+            >
+              <span
+                id="disp-t1-name"
+                class="text-[10px] font-bold uppercase tracking-wide opacity-70"
+                >Team A</span
+              >
+              <span id="disp-t1-score" class="text-2xl font-black text-gray-800"
+                >0/0</span
+              >
+              <div
+                class="flex justify-between w-full mt-1 text-[9px] font-bold opacity-60"
+              >
+                <span id="disp-t1-overs">Ov: 0.0</span>
+                <span id="disp-t1-rr">RR: 0.0</span>
+              </div>
+            </div>
+            <div
+              id="card-team2"
+              class="glass-panel rounded-xl p-2 flex flex-col items-center justify-center border-b-4 border-transparent transition-all duration-300 opacity-60 grayscale"
+            >
+              <span
+                id="disp-t2-name"
+                class="text-[10px] font-bold uppercase tracking-wide opacity-70"
+                >Team B</span
+              >
+              <span id="disp-t2-score" class="text-2xl font-black text-gray-800"
+                >0/0</span
+              >
+              <div
+                class="flex justify-between w-full mt-1 text-[9px] font-bold opacity-60"
+              >
+                <span id="disp-t2-overs">Ov: 0.0</span>
+                <span id="disp-t2-rr">RR: 0.0</span>
+              </div>
             </div>
           </div>
 
-          <h3 class="text-center text-xl font-bold text-gray-700 mb-4">
-            Game Progress
-          </h3>
-
-          <h4 class="text-lg font-semibold text-gray-600 mb-2">
-            Overs Timeline
-          </h4>
           <div
-            id="overs-timeline-container"
-            class="flex overflow-x-auto gap-4 p-2 mb-6"
-          ></div>
-
-          <h4 class="text-lg font-semibold text-gray-600 mb-2">
-            Ball-by-ball Timeline
-          </h4>
-          <div
-            id="balls-timeline-container"
-            class="flex overflow-x-auto gap-1 p-2 mb-6 items-center"
-          ></div>
-
-          <h4 class="text-lg font-semibold text-gray-600 mb-2">
-            Runs per Over
-          </h4>
-          <div class="h-64">
-            <canvas id="runsPerOverChart"></canvas>
+            id="chase-stats"
+            class="hidden bg-indigo-900/80 backdrop-blur rounded-lg p-2 mb-2 text-white text-center shadow-lg border border-indigo-500/30"
+          >
+            <p class="text-xs font-bold">
+              Need
+              <span id="runs-needed" class="text-yellow-400 text-sm">0</span>
+              runs in
+              <span id="balls-left" class="text-yellow-400 text-sm">0</span>
+              balls
+            </p>
           </div>
         </div>
-      </div>
-    </div>
 
-    <div
-      id="next-inning-modal"
-      class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center"
-    >
-      <div
-        class="bg-white p-6 rounded-2xl shadow-xl text-center max-w-sm mx-auto"
-      >
-        <h3 class="text-xl font-bold mb-4">Start Next Inning?</h3>
-        <p>
-          Are you sure you want to proceed to the next inning? This will lock
-          the current team's score.
-        </p>
-        <div class="mt-4 flex justify-around">
-          <button
-            onclick="nextInning()"
-            class="bg-teal-500 text-white font-bold py-2 px-4 rounded-xl hover:bg-teal-600"
+        <div
+          class="flex-1 min-h-[100px] grid grid-cols-3 gap-2 mb-2 overflow-hidden"
+        >
+          <div
+            class="col-span-1 bg-white/90 backdrop-blur rounded-xl p-2 shadow-md flex flex-col h-full"
           >
-            Yes, Proceed
-          </button>
-          <button
-            onclick="hideNextInningModal()"
-            class="bg-gray-400 text-white font-bold py-2 px-4 rounded-xl hover:bg-gray-500"
+            <span
+              class="text-[9px] font-bold uppercase text-gray-500 mb-1 shrink-0"
+              >Graph</span
+            >
+            <div class="overflow-x-auto flex-1 flex items-end">
+              <div id="runs-bar-chart" class="bar-container w-full"></div>
+            </div>
+          </div>
+          <div
+            class="col-span-1 bg-white/90 backdrop-blur rounded-xl p-2 shadow-md flex flex-col h-full"
           >
-            Cancel
-          </button>
+            <span
+              class="text-[9px] font-bold uppercase text-gray-500 mb-1 border-b pb-1 shrink-0"
+              >Over Summary</span
+            >
+            <div id="overs-list" class="stats-list flex-1">
+              <div class="text-[10px] text-gray-400 text-center mt-2">
+                No overs
+              </div>
+            </div>
+          </div>
+          <div
+            class="col-span-1 bg-white/90 backdrop-blur rounded-xl p-2 shadow-md flex flex-col h-full"
+          >
+            <span
+              class="text-[9px] font-bold uppercase text-gray-500 mb-1 border-b pb-1 shrink-0"
+              >Wickets</span
+            >
+            <div id="fow-list" class="stats-list flex-1">
+              <div class="text-[10px] text-gray-400 text-center mt-2">
+                No wickets
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
 
-    <div
-      id="reset-modal"
-      class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center"
-    >
-      <div
-        class="bg-white p-6 rounded-2xl shadow-xl text-center max-w-sm mx-auto"
-      >
-        <h3 class="text-xl font-bold mb-4">Reset Game?</h3>
-        <p>
-          Are you sure you want to reset the entire game? All scores will be
-          cleared.
-        </p>
-        <div class="mt-4 flex justify-around">
-          <button
-            onclick="resetGame()"
-            class="bg-red-500 text-white font-bold py-2 px-4 rounded-xl hover:bg-red-600"
+        <div
+          class="bg-black/20 backdrop-blur rounded-lg p-2 mb-2 overflow-x-auto whitespace-nowrap shrink-0"
+        >
+          <div class="flex items-center gap-2">
+            <span
+              class="text-white text-[10px] font-bold uppercase mr-2 opacity-75"
+              >Timeline:</span
+            >
+            <div
+              id="timeline-container"
+              class="flex gap-2 h-8 items-center"
+            ></div>
+          </div>
+        </div>
+
+        <div class="shrink-0 relative">
+          <div
+            id="batting-indicator"
+            class="text-center text-white/80 text-xs font-bold mb-1 uppercase tracking-widest"
           >
-            Yes, Reset
-          </button>
-          <button
-            onclick="hideResetModal()"
-            class="bg-gray-400 text-white font-bold py-2 px-4 rounded-xl hover:bg-gray-500"
+            Team A Batting
+          </div>
+
+          <div
+            class="glass-panel rounded-t-3xl rounded-b-xl p-3 shadow-[0_-10px_40px_rgba(0,0,0,0.2)]"
           >
-            Cancel
-          </button>
+            <div
+              id="next-inning-overlay"
+              class="absolute inset-0 z-20 glass-panel rounded-t-3xl rounded-b-xl flex items-center justify-center hidden"
+            >
+              <button
+                onclick="nextInning()"
+                class="w-3/4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-4 rounded-xl font-black text-xl shadow-2xl animate-pulse border-2 border-white/50"
+              >
+                START 2nd INNING 🏏
+              </button>
+            </div>
+
+            <div id="scoring-grid">
+              <div class="grid grid-cols-3 gap-2 mb-2">
+                <button
+                  onclick="handleScore(0)"
+                  class="score-btn btn-3d bg-gray-100 border-gray-300 text-gray-600 rounded-xl py-3 text-xl font-black hover:bg-gray-200"
+                >
+                  0
+                </button>
+                <button
+                  onclick="handleScore(1)"
+                  class="score-btn btn-3d bg-white border-gray-200 text-blue-600 rounded-xl py-3 text-xl font-black hover:bg-blue-50"
+                >
+                  1
+                </button>
+                <button
+                  onclick="handleScore(2)"
+                  class="score-btn btn-3d bg-white border-gray-200 text-blue-600 rounded-xl py-3 text-xl font-black hover:bg-blue-50"
+                >
+                  2
+                </button>
+                <button
+                  onclick="handleScore(4)"
+                  class="score-btn btn-3d bg-blue-500 border-blue-700 text-white rounded-xl py-3 text-xl font-black hover:bg-blue-600 shadow-blue-500/50"
+                >
+                  4
+                </button>
+                <button
+                  onclick="handleScore(3)"
+                  class="score-btn btn-3d bg-white border-gray-200 text-blue-600 rounded-xl py-3 text-xl font-black hover:bg-blue-50"
+                >
+                  3
+                </button>
+                <button
+                  onclick="handleScore(6)"
+                  class="score-btn btn-3d bg-green-500 border-green-700 text-white rounded-xl py-3 text-xl font-black hover:bg-green-600 shadow-green-500/50"
+                >
+                  6
+                </button>
+              </div>
+              <div class="grid grid-cols-3 gap-2 mb-4">
+                <button
+                  onclick="handleWicket()"
+                  class="score-btn btn-3d bg-red-500 border-red-700 text-white rounded-xl py-3 text-sm font-bold uppercase tracking-wider hover:bg-red-600"
+                >
+                  OUT
+                </button>
+                <button
+                  onclick="handleExtra()"
+                  class="score-btn btn-3d bg-orange-400 border-orange-600 text-white rounded-xl py-3 text-sm font-bold uppercase tracking-wider hover:bg-orange-500"
+                >
+                  WD/NB
+                </button>
+                <button
+                  onclick="undo()"
+                  class="score-btn btn-3d bg-gray-700 border-gray-900 text-white rounded-xl py-3 text-sm font-bold uppercase tracking-wider hover:bg-gray-800"
+                >
+                  UNDO
+                </button>
+              </div>
+
+              <div
+                class="grid grid-cols-2 gap-2 border-t border-gray-300/50 pt-3"
+              >
+                <button
+                  onclick="copyScore()"
+                  class="bg-emerald-100 text-emerald-800 py-2 rounded-lg text-xs font-bold hover:bg-emerald-200 transition flex items-center justify-center gap-1"
+                >
+                  <span>📱</span> Share Score
+                </button>
+                <button
+                  onclick="confirmReset()"
+                  class="bg-rose-100 text-rose-800 py-2 rounded-lg text-xs font-bold hover:bg-rose-200 transition flex items-center justify-center gap-1"
+                >
+                  <span>⚠️</span> Restart Match
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
 
     <script>
-      // Game state object
+      // --- GAME STATE ---
       let state = {
-        team1: {
-          name: "Team A",
-          runs: 0,
-          wickets: 0,
-          oversTimeline: [],
-          ballsTimeline: [],
-        },
-        team2: {
-          name: "Team B",
-          runs: 0,
-          wickets: 0,
-          oversTimeline: [],
-          ballsTimeline: [],
-        },
-        currentInning: 1,
-        ballsInOver: 0,
-        totalOvers: 0,
-        scoreHistory: [],
-        currentOverRuns: 0,
-        currentOverWickets: 0,
-        maxOvers: 10,
-        targetScore: 0,
-        gameOver: false,
+        t1Name: "Team A",
+        t2Name: "Team B",
+        overs: 0,
+        inning: 1,
+        gameStarted: false,
+        winner: null,
+        team1: { runs: 0, wickets: 0, balls: 0, history: [] },
+        team2: { runs: 0, wickets: 0, balls: 0, history: [] },
       };
+      let confettiInterval = null;
 
-      // DOM elements
-      const startScreenContainer = document.getElementById(
-        "start-screen-container"
-      );
-      const scorecardContainer = document.getElementById("scorecard-container");
-      const initialTeam1NameInput =
-        document.getElementById("initial-team1-name");
-      const initialTeam2NameInput =
-        document.getElementById("initial-team2-name");
-      const initialMaxOversInput = document.getElementById("initial-max-overs");
-      const startGameButton = document.getElementById("start-game-button");
+      // --- AUDIO ---
+      const sounds = {
+        whistle: new Audio(
+          "https://assets.mixkit.co/active_storage/sfx/2103/2103-preview.mp3"
+        ),
+        cheer: new Audio(
+          "https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3"
+        ),
+        wicket: new Audio(
+          "https://assets.mixkit.co/active_storage/sfx/270/270-preview.mp3"
+        ),
+      };
+      function playSound(type) {
+        try {
+          if (sounds[type]) {
+            sounds[type].currentTime = 0;
+            sounds[type].play().catch((e) => {});
+          }
+        } catch (e) {}
+      }
 
-      const team1NameInput = document.getElementById("team1-name-input");
-      const team2NameInput = document.getElementById("team2-name-input");
-      const team1RunsEl = document.getElementById("team1-runs");
-      const team1WicketsEl = document.getElementById("team1-wickets");
-      const team2RunsEl = document.getElementById("team2-runs");
-      const team2WicketsEl = document.getElementById("team2-wickets");
-      const oversEl = document.getElementById("overs");
-      const inningStatusText = document.getElementById("inning-status-text");
-      const totalOversDisplay = document.getElementById("total-overs-display");
-      const maxOversInput = document.getElementById("max-overs-input");
-      const nextInningModal = document.getElementById("next-inning-modal");
-      const resetModal = document.getElementById("reset-modal");
-      const team1Scorecard = document.getElementById("team1-scorecard");
-      const team2Scorecard = document.getElementById("team2-scorecard");
-      const oversTimelineContainer = document.getElementById(
-        "overs-timeline-container"
-      );
-      const ballsTimelineContainer = document.getElementById(
-        "balls-timeline-container"
-      );
-      const runsPerOverChartCanvas =
-        document.getElementById("runsPerOverChart");
-      const gameOverMessage = document.getElementById("game-over-message");
-      const gameOverText = document.getElementById("game-over-text");
-      const shareLinkInput = document.getElementById("share-link-input");
-      let runsPerOverChart;
+      // --- HELPER ---
+      function isStrictOverLimit() {
+        const currentTeam = state.inning === 1 ? state.team1 : state.team2;
+        const maxBalls = state.overs * 6;
+        return currentTeam.balls >= maxBalls;
+      }
 
-      // Event listeners for team name and max overs
-      team1NameInput.addEventListener("change", (e) => {
-        state.team1.name = e.target.value;
-        renderState();
-        updateShareableLink();
-      });
-      team2NameInput.addEventListener("change", (e) => {
-        state.team2.name = e.target.value;
-        renderState();
-        updateShareableLink();
-      });
-      maxOversInput.addEventListener("change", (e) => {
-        state.maxOvers = parseInt(e.target.value, 10) || 0;
-        renderState();
-        updateShareableLink();
-      });
+      // --- CORE FUNCTIONS ---
+      function startGame() {
+        const oversInput = document.getElementById("match-overs").value;
+        state.t1Name = document.getElementById("t1-name").value || "Team A";
+        state.t2Name = document.getElementById("t2-name").value || "Team B";
+        if (!oversInput || oversInput < 1) {
+          alert("Please enter valid overs");
+          return;
+        }
+        state.overs = parseInt(oversInput);
+        state.gameStarted = true;
+        playSound("whistle");
+        document.getElementById("setup-screen").classList.add("hidden-screen");
+        document
+          .getElementById("game-screen")
+          .classList.remove("hidden-screen");
+        updateActiveTeamUI();
+        render();
+      }
 
-      // Start Game function
-      startGameButton.addEventListener("click", () => {
-        const team1Name = initialTeam1NameInput.value || "Team A";
-        const team2Name = initialTeam2NameInput.value || "Team B";
-        const maxOvers = parseInt(initialMaxOversInput.value, 10) || 10;
+      function handleScore(runs) {
+        if (state.winner || isStrictOverLimit()) return;
+        const team = state.inning === 1 ? state.team1 : state.team2;
+        team.runs += runs;
+        team.balls++;
+        team.history.push(runs);
+        if (runs === 4) {
+          triggerEventAnimation("FOUR", "text-blue-500", "anim-four");
+          playSound("cheer");
+        } else if (runs === 6) {
+          triggerEventAnimation("SIX", "text-green-500", "anim-six");
+          playSound("whistle");
+        }
+        checkGameStatus();
+        render();
+      }
 
-        state.team1.name = team1Name;
-        state.team2.name = team2Name;
-        state.maxOvers = maxOvers;
+      function handleWicket() {
+        if (state.winner || isStrictOverLimit()) return;
+        const team = state.inning === 1 ? state.team1 : state.team2;
+        team.wickets++;
+        team.balls++;
+        team.history.push("W");
+        triggerEventAnimation("OUT", "text-red-500", "anim-wicket");
+        playSound("wicket");
+        checkGameStatus();
+        render();
+      }
 
-        startScreenContainer.classList.add("hidden");
-        scorecardContainer.classList.remove("hidden");
-        renderState();
-        updateShareableLink();
-      });
+      function handleExtra() {
+        if (state.winner || isStrictOverLimit()) return;
+        const team = state.inning === 1 ? state.team1 : state.team2;
+        team.runs++;
+        team.history.push("+1");
+        checkGameStatus();
+        render();
+      }
 
-      // Function to render the current state to the UI
-      function renderState() {
-        // Update team names
-        team1NameInput.value = state.team1.name;
-        team2NameInput.value = state.team2.name;
-
-        // Update active team highlighting
-        if (state.currentInning === 1) {
-          team1Scorecard.classList.remove("bg-gray-400");
-          team1Scorecard.classList.add("bg-blue-500");
-          team2Scorecard.classList.remove("bg-green-500");
-          team2Scorecard.classList.add("bg-gray-400");
+      function undo() {
+        if (state.winner) return;
+        const team = state.inning === 1 ? state.team1 : state.team2;
+        if (team.history.length === 0) return;
+        const lastAction = team.history.pop();
+        if (lastAction === "W") {
+          team.wickets--;
+          team.balls--;
+        } else if (lastAction === "+1") {
+          team.runs--;
         } else {
-          team1Scorecard.classList.remove("bg-blue-500");
-          team1Scorecard.classList.add("bg-gray-400");
-          team2Scorecard.classList.remove("bg-gray-400");
-          team2Scorecard.classList.add("bg-green-500");
+          team.runs -= lastAction;
+          team.balls--;
         }
-
-        // Update scores
-        team1RunsEl.textContent = state.team1.runs;
-        team1WicketsEl.textContent = state.team1.wickets;
-        team2RunsEl.textContent = state.team2.runs;
-        team2WicketsEl.textContent = state.team2.wickets;
-
-        // Format overs display (e.g., 2.3)
-        const oversDisplay = `${state.totalOvers}.${state.ballsInOver}`;
-        oversEl.textContent = oversDisplay;
-        totalOversDisplay.textContent = state.maxOvers;
-
-        // Update inning status text with run rate or required info
-        const currentTeam =
-          state.currentInning === 1 ? state.team1 : state.team2;
-        const currentRuns = currentTeam.runs;
-        const oversPlayed = state.totalOvers + state.ballsInOver / 6;
-
-        if (state.currentInning === 1) {
-          const currentRunRate =
-            oversPlayed > 0 ? (currentRuns / oversPlayed).toFixed(2) : "0.00";
-          inningStatusText.innerHTML = `
-                    <span class="font-bold">${state.team1.name}</span> Batting | Current Run Rate: <span class="font-bold">${currentRunRate}</span>
-                `;
-        } else {
-          const requiredRuns = state.targetScore - currentRuns;
-          const ballsRemaining =
-            (state.maxOvers - state.totalOvers) * 6 - state.ballsInOver;
-          const requiredRunRate =
-            ballsRemaining > 0
-              ? ((requiredRuns / ballsRemaining) * 6).toFixed(2)
-              : "0.00";
-
-          inningStatusText.innerHTML = `
-                    <span class="font-bold">${state.team2.name}</span> Batting | Required Run Rate: <span class="font-bold">${requiredRunRate}</span>
-                    <br>Need <span class="font-bold">${requiredRuns}</span> runs from <span class="font-bold">${ballsRemaining}</span> balls
-                `;
-        }
-
-        // Handle game over state
-        if (state.gameOver) {
-          gameOverMessage.classList.remove("hidden");
-          gameOverMessage.classList.add("celebration-bg");
-          gameOverText.textContent = getMatchResult();
-        } else {
-          gameOverMessage.classList.add("hidden");
-          gameOverMessage.classList.remove("celebration-bg");
-        }
-
-        // Render the timelines and chart
-        renderTimeline();
-        renderBallsTimeline();
-        updateChart();
+        document.getElementById("next-inning-overlay").classList.add("hidden");
+        render();
       }
 
-      // Add a run to the current inning
-      function addRun(runs) {
-        if (state.gameOver) return;
-        const currentTeam =
-          state.currentInning === 1 ? state.team1 : state.team2;
-        currentTeam.runs += runs;
-        state.ballsInOver++;
-        state.currentOverRuns += runs;
-        state.scoreHistory.push({
-          type: "run",
-          runs: runs,
-          team: state.currentInning,
-        });
-        currentTeam.ballsTimeline.push({ type: "run", runs: runs });
-        checkOverCompletion();
-        checkMatchEnd();
-        renderState();
-        updateShareableLink();
-      }
-
-      // Add a wicket to the current inning
-      function addWicket() {
-        if (state.gameOver) return;
-        const currentTeam =
-          state.currentInning === 1 ? state.team1 : state.team2;
-        currentTeam.wickets++;
-        state.ballsInOver++;
-        state.currentOverWickets++;
-        state.scoreHistory.push({ type: "wicket", team: state.currentInning });
-        currentTeam.ballsTimeline.push({ type: "wicket" });
-        checkOverCompletion();
-        checkMatchEnd();
-        renderState();
-        updateShareableLink();
-      }
-
-      // Add a run and a wicket (run-out, etc.)
-      function addRunAndWicket() {
-        if (state.gameOver) return;
-        const currentTeam =
-          state.currentInning === 1 ? state.team1 : state.team2;
-        currentTeam.runs++;
-        currentTeam.wickets++;
-        state.ballsInOver++;
-        state.currentOverRuns++;
-        state.currentOverWickets++;
-        state.scoreHistory.push({
-          type: "run+wicket",
-          team: state.currentInning,
-        });
-        currentTeam.ballsTimeline.push({ type: "run+wicket" });
-        checkOverCompletion();
-        checkMatchEnd();
-        renderState();
-        updateShareableLink();
-      }
-
-      // Add an extra (wide or no-ball)
-      function addExtra() {
-        if (state.gameOver) return;
-        const currentTeam =
-          state.currentInning === 1 ? state.team1 : state.team2;
-        currentTeam.runs++;
-        state.currentOverRuns++;
-        state.scoreHistory.push({ type: "extra", team: state.currentInning });
-        currentTeam.ballsTimeline.push({ type: "extra" });
-        checkMatchEnd();
-        renderState();
-        updateShareableLink();
-      }
-
-      // Undo the last action
-      function undoLastAction() {
-        if (state.scoreHistory.length === 0 || state.gameOver) {
-          return; // No actions to undo or game is over
-        }
-
-        const lastAction = state.scoreHistory.pop();
-        const currentTeam = lastAction.team === 1 ? state.team1 : state.team2;
-
-        // Remove the last ball from the detailed timeline
-        if (currentTeam.ballsTimeline.length > 0) {
-          currentTeam.ballsTimeline.pop();
-        }
-
-        if (lastAction.type === "run") {
-          currentTeam.runs -= lastAction.runs;
-          state.currentOverRuns -= lastAction.runs;
-          state.ballsInOver--;
-        } else if (lastAction.type === "wicket") {
-          currentTeam.wickets--;
-          state.currentOverWickets--;
-          state.ballsInOver--;
-        } else if (lastAction.type === "run+wicket") {
-          currentTeam.runs--;
-          currentTeam.wickets--;
-          state.currentOverRuns--;
-          state.currentOverWickets--;
-          state.ballsInOver--;
-        } else if (lastAction.type === "extra") {
-          currentTeam.runs--;
-          state.currentOverRuns--;
-        }
-
-        // If we undo a new over, revert to the previous over's state
-        if (state.ballsInOver < 0) {
-          state.ballsInOver = 5;
-          state.totalOvers--;
-          const lastOverData = currentTeam.oversTimeline.pop();
-          if (lastOverData) {
-            state.currentOverRuns = lastOverData.runs;
-            state.currentOverWickets = lastOverData.wickets;
+      function checkGameStatus() {
+        const maxBalls = state.overs * 6;
+        if (state.inning === 2) {
+          if (state.team2.runs > state.team1.runs) {
+            playSound("cheer");
+            declareWinner(
+              state.t2Name,
+              `Won by ${10 - state.team2.wickets} wickets!`
+            );
+            return;
           }
         }
-
-        renderState();
-        updateShareableLink();
+        const currentTeam = state.inning === 1 ? state.team1 : state.team2;
+        const isAllOut = currentTeam.wickets >= 10;
+        const isOversDone = currentTeam.balls >= maxBalls;
+        if (isAllOut || isOversDone) {
+          if (state.inning === 1) {
+            document
+              .getElementById("next-inning-overlay")
+              .classList.remove("hidden");
+          } else {
+            playSound("cheer");
+            if (state.team1.runs > state.team2.runs)
+              declareWinner(
+                state.t1Name,
+                `Won by ${state.team1.runs - state.team2.runs} runs!`
+              );
+            else if (state.team1.runs === state.team2.runs)
+              declareWinner("TIE", "What a match!");
+            else
+              declareWinner(
+                state.t2Name,
+                `Won by ${10 - state.team2.wickets} wickets!`
+              );
+          }
+        }
       }
 
-      // Check if the over is complete and update state
-      function checkOverCompletion() {
-        if (state.ballsInOver === 6) {
-          const currentTeam =
-            state.currentInning === 1 ? state.team1 : state.team2;
-          currentTeam.oversTimeline.push({
-            runs: state.currentOverRuns,
-            wickets: state.currentOverWickets,
+      function nextInning() {
+        state.inning = 2;
+        document.getElementById("next-inning-overlay").classList.add("hidden");
+        playSound("whistle");
+        updateActiveTeamUI();
+        render();
+      }
+
+      function resetGame() {
+        location.reload();
+      }
+      function confirmReset() {
+        if (
+          confirm(
+            "Are you sure you want to restart the match? Current score will be lost."
+          )
+        ) {
+          resetGame();
+        }
+      }
+
+      function copyScore() {
+        const t1 = `${state.t1Name}: ${state.team1.runs}/${
+          state.team1.wickets
+        } (${formatOvers(state.team1.balls)})`;
+        const t2 = `${state.t2Name}: ${state.team2.runs}/${
+          state.team2.wickets
+        } (${formatOvers(state.team2.balls)})`;
+        const status = state.winner
+          ? `🏆 Winner: ${state.winner}`
+          : `🏏 Live: ${
+              state.inning === 1 ? state.t1Name : state.t2Name
+            } Batting`;
+
+        const text = `*Gully Cricket Update* 🏏\n\n${t1}\n${t2}\n\n${status}`;
+
+        navigator.clipboard
+          .writeText(text)
+          .then(() => {
+            alert("Score copied! Paste it in WhatsApp.");
+          })
+          .catch((err) => {
+            console.error("Failed to copy: ", err);
+          });
+      }
+
+      // --- RENDERERS ---
+      function render() {
+        document.getElementById("disp-t1-name").innerText = state.t1Name;
+        document.getElementById("disp-t2-name").innerText = state.t2Name;
+        document.getElementById(
+          "disp-t1-score"
+        ).innerText = `${state.team1.runs}/${state.team1.wickets}`;
+        document.getElementById(
+          "disp-t2-score"
+        ).innerText = `${state.team2.runs}/${state.team2.wickets}`;
+        document.getElementById("disp-t1-overs").innerText = `Ov: ${formatOvers(
+          state.team1.balls
+        )}`;
+        document.getElementById("disp-t2-overs").innerText = `Ov: ${formatOvers(
+          state.team2.balls
+        )}`;
+        document.getElementById("disp-t1-rr").innerText = `RR: ${calcRR(
+          state.team1.runs,
+          state.team1.balls
+        )}`;
+        document.getElementById("disp-t2-rr").innerText = `RR: ${calcRR(
+          state.team2.runs,
+          state.team2.balls
+        )}`;
+        document.getElementById("batting-indicator").innerText = `${
+          state.inning === 1 ? state.t1Name : state.t2Name
+        } BATTING`;
+
+        if (state.inning === 2 && !state.winner) {
+          document.getElementById("chase-stats").classList.remove("hidden");
+          const runsNeeded = state.team1.runs - state.team2.runs + 1;
+          const ballsLeft = state.overs * 6 - state.team2.balls;
+          document.getElementById("runs-needed").innerText = Math.max(
+            0,
+            runsNeeded
+          );
+          document.getElementById("balls-left").innerText = Math.max(
+            0,
+            ballsLeft
+          );
+        } else {
+          document.getElementById("chase-stats").classList.add("hidden");
+        }
+
+        const currentTeam = state.inning === 1 ? state.team1 : state.team2;
+        renderTimeline(currentTeam.history);
+        const stats = calculateStats(currentTeam.history);
+        renderStatsUI(stats.oversData, stats.fowData);
+
+        const isLimit =
+          isStrictOverLimit() ||
+          (state.inning === 1 && state.team1.wickets >= 10);
+        document
+          .querySelectorAll(".score-btn")
+          .forEach((b) => (b.disabled = isLimit));
+      }
+
+      function renderTimeline(history) {
+        const container = document.getElementById("timeline-container");
+        container.innerHTML = "";
+        let ballCount = 0;
+        let timeline = [];
+        history.forEach((val) => {
+          timeline.push({ type: "ball", val: val });
+          if (val !== "+1") ballCount++;
+          if (ballCount === 6) {
+            timeline.push({ type: "marker" });
+            ballCount = 0;
+          }
+        });
+        timeline.forEach((item) => {
+          if (item.type === "marker") {
+            const el = document.createElement("div");
+            el.className = "timeline-marker";
+            el.innerHTML = `<div class="timeline-line"></div>`;
+            container.appendChild(el);
+          } else {
+            const val = item.val;
+            const el = document.createElement("div");
+            el.className =
+              "flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shadow-md border border-white/20 ";
+            if (val === 6) {
+              el.classList.add("bg-green-500", "text-white");
+              el.innerText = "6";
+            } else if (val === 4) {
+              el.classList.add("bg-blue-500", "text-white");
+              el.innerText = "4";
+            } else if (val === "W") {
+              el.classList.add("bg-red-500", "text-white");
+              el.innerText = "W";
+            } else if (val === "+1") {
+              el.classList.add("bg-orange-400", "text-white");
+              el.innerText = "wd";
+            } else if (val === 0) {
+              el.classList.add("bg-gray-200", "text-gray-600");
+              el.innerText = "•";
+            } else {
+              el.classList.add("bg-indigo-100", "text-indigo-800");
+              el.innerText = val;
+            }
+            container.appendChild(el);
+          }
+        });
+        container.parentElement.scrollLeft =
+          container.parentElement.scrollWidth;
+      }
+
+      function calculateStats(history) {
+        let oversData = [],
+          fowData = [],
+          currentOverRuns = 0,
+          ballCount = 0,
+          totalLegalBalls = 0,
+          currentScore = 0,
+          currentWickets = 0;
+        history.forEach((action) => {
+          if (action === "W") {
+            currentWickets++;
+            totalLegalBalls++;
+            ballCount++;
+            fowData.push(
+              `${currentScore}/${currentWickets} (${formatOvers(
+                totalLegalBalls
+              )})`
+            );
+          } else if (action === "+1") {
+            currentScore++;
+            currentOverRuns++;
+          } else {
+            currentScore += action;
+            currentOverRuns += action;
+            totalLegalBalls++;
+            ballCount++;
+          }
+          if (ballCount === 6) {
+            oversData.push({ runs: currentOverRuns });
+            currentOverRuns = 0;
+            ballCount = 0;
+          }
+        });
+        if (
+          ballCount > 0 ||
+          history.length === 0 ||
+          (history.length > 0 && ballCount === 0 && oversData.length === 0)
+        ) {
+          oversData.push({ runs: currentOverRuns, isCurrent: true });
+        }
+        return { oversData, fowData };
+      }
+
+      function renderStatsUI(oversData, fowData) {
+        const chartContainer = document.getElementById("runs-bar-chart");
+        chartContainer.innerHTML = "";
+        const maxRuns = Math.max(...oversData.map((o) => o.runs), 8);
+        oversData.forEach((over, index) => {
+          const bar = document.createElement("div");
+          bar.className = "bar";
+          if (over.isCurrent) bar.classList.add("current");
+          bar.style.setProperty(
+            "--target-height",
+            `${Math.max((over.runs / maxRuns) * 100, 5)}%`
+          );
+          const val = document.createElement("span");
+          val.className = "bar-value";
+          val.innerText = over.runs;
+          bar.appendChild(val);
+          const lbl = document.createElement("span");
+          lbl.className = "bar-label";
+          lbl.innerText = index + 1;
+          bar.appendChild(lbl);
+          chartContainer.appendChild(bar);
+        });
+        chartContainer.parentElement.scrollLeft =
+          chartContainer.parentElement.scrollWidth;
+
+        const overListDiv = document.getElementById("overs-list");
+        overListDiv.innerHTML = "";
+        const completedOvers = oversData.filter((o) => !o.isCurrent);
+        if (completedOvers.length === 0)
+          overListDiv.innerHTML =
+            '<div class="text-[10px] text-gray-400 text-center mt-2">No overs</div>';
+        else
+          completedOvers.forEach((over, idx) => {
+            overListDiv.innerHTML += `<div class="stats-item"><span class="font-bold text-gray-600">Over ${
+              idx + 1
+            }</span><span class="font-bold text-green-600">${
+              over.runs
+            } runs</span></div>`;
           });
 
-          state.totalOvers++;
-          state.ballsInOver = 0;
-          state.currentOverRuns = 0;
-          state.currentOverWickets = 0;
-        }
+        const fowListDiv = document.getElementById("fow-list");
+        fowListDiv.innerHTML = "";
+        if (fowData.length === 0)
+          fowListDiv.innerHTML =
+            '<div class="text-[10px] text-gray-400 text-center mt-2">No wickets</div>';
+        else
+          fowData.forEach((fow) => {
+            fowListDiv.innerHTML += `<div class="stats-item"><span class="font-bold text-red-500">Wicket</span><span class="font-bold text-gray-700">${fow}</span></div>`;
+          });
       }
 
-      // Check for game over conditions
-      function checkMatchEnd() {
-        if (state.currentInning === 1) {
-          // Inning 1 ends if overs are complete or 10 wickets are down
-          if (state.totalOvers >= state.maxOvers || state.team1.wickets >= 10) {
-            showNextInningModal();
-          }
-        } else if (state.currentInning === 2) {
-          // Inning 2 ends if overs are complete, 10 wickets are down, or the target is reached
-          if (
-            state.totalOvers >= state.maxOvers ||
-            state.team2.wickets >= 10 ||
-            state.team2.runs > state.targetScore
-          ) {
-            state.gameOver = true;
-          }
-        }
-      }
-
-      // Determine the match result and return a message
-      function getMatchResult() {
-        if (state.team2.runs > state.targetScore) {
-          return `${state.team2.name} wins by ${
-            10 - state.team2.wickets
-          } wickets!`;
-        } else if (state.team2.runs === state.targetScore) {
-          return `The match is a tie!`;
+      function updateActiveTeamUI() {
+        const c1 = document.getElementById("card-team1"),
+          c2 = document.getElementById("card-team2");
+        const baseClass =
+          "glass-panel rounded-xl p-2 flex flex-col items-center justify-center border-b-4 border-transparent transition-all duration-300";
+        c1.className = baseClass;
+        c2.className = baseClass;
+        if (state.inning === 1) {
+          c1.classList.add(
+            "bg-white",
+            "opacity-100",
+            "border-green-500",
+            "scale-105",
+            "shadow-xl"
+          );
+          c2.classList.add("opacity-60", "grayscale", "scale-95");
         } else {
-          return `${state.team1.name} wins by ${
-            state.targetScore - state.team2.runs
-          } runs!`;
+          c2.classList.add(
+            "bg-white",
+            "opacity-100",
+            "border-blue-500",
+            "scale-105",
+            "shadow-xl"
+          );
+          c1.classList.add("opacity-60", "grayscale", "scale-95");
         }
       }
 
-      // Move to the next inning
-      function nextInning() {
-        hideNextInningModal();
-        if (state.currentInning === 1) {
-          // Set the target score to 1 more than Team 1's score
-          state.targetScore = state.team1.runs + 1;
-          state.currentInning = 2;
-          state.ballsInOver = 0;
-          state.totalOvers = 0;
-          state.currentOverRuns = 0;
-          state.currentOverWickets = 0;
-        }
-        renderState();
-        updateShareableLink();
+      function triggerEventAnimation(text, colorClass, animClass) {
+        document.body.classList.remove("shake-screen");
+        void document.body.offsetWidth;
+        document.body.classList.add("shake-screen");
+        const overlay = document.getElementById("event-overlay"),
+          txt = document.getElementById("event-text");
+        overlay.classList.remove("hidden");
+        txt.innerText = text;
+        txt.className = `overlay-txt-base ${colorClass} ${animClass}`;
+        setTimeout(() => {
+          overlay.classList.add("hidden");
+        }, 1500);
+        triggerConfetti(20);
       }
 
-      // Reset the entire game
-      function resetGame() {
-        hideResetModal();
-        history.replaceState(null, "", location.pathname);
-        state = {
-          team1: {
-            name: "Team A",
-            runs: 0,
-            wickets: 0,
-            oversTimeline: [],
-            ballsTimeline: [],
-          },
-          team2: {
-            name: "Team B",
-            runs: 0,
-            wickets: 0,
-            oversTimeline: [],
-            ballsTimeline: [],
-          },
-          currentInning: 1,
-          ballsInOver: 0,
-          totalOvers: 0,
-          scoreHistory: [],
-          currentOverRuns: 0,
-          currentOverWickets: 0,
-          maxOvers: 10,
-          targetScore: 0,
-          gameOver: false,
-        };
-        startScreenContainer.classList.remove("hidden");
-        scorecardContainer.classList.add("hidden");
-        renderState();
+      function declareWinner(title, desc) {
+        state.winner = title;
+        const modal = document.getElementById("winner-modal");
+        document.getElementById("winner-title").innerText = title;
+        document.getElementById("winner-desc").innerText = desc;
+        modal.classList.remove("hidden");
+        confettiInterval = setInterval(() => {
+          triggerConfetti(30);
+        }, 800);
+        triggerConfetti(100);
       }
-
-      // Renders the overs timeline boxes
-      function renderTimeline() {
-        const currentTeamTimeline =
-          state.currentInning === 1
-            ? state.team1.oversTimeline
-            : state.team2.oversTimeline;
-        oversTimelineContainer.innerHTML = ""; // Clear previous timeline
-        currentTeamTimeline.forEach((over, index) => {
-          const overDiv = document.createElement("div");
-          overDiv.className =
-            "flex-shrink-0 bg-white border border-gray-300 rounded-lg p-2 text-center shadow-sm w-24";
-          overDiv.innerHTML = `
-                    <p class="text-sm font-bold text-gray-800">Over ${
-                      index + 1
-                    }</p>
-                    <p class="text-md text-gray-700 mt-1">${over.runs} runs, ${
-            over.wickets
-          } wkt</p>
-                `;
-          oversTimelineContainer.appendChild(overDiv);
-        });
-      }
-
-      // Renders the ball-by-ball timeline
-      function renderBallsTimeline() {
-        const currentTeamBallsTimeline =
-          state.currentInning === 1
-            ? state.team1.ballsTimeline
-            : state.team2.ballsTimeline;
-        ballsTimelineContainer.innerHTML = "";
-        currentTeamBallsTimeline.forEach((ball, index) => {
-          const ballDiv = document.createElement("div");
-          ballDiv.className =
-            "flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white animate-pop";
-
-          let ballText = "";
-          let bgColor = "bg-gray-400";
-
-          if (ball.type === "run") {
-            ballText = ball.runs;
-            if (ball.runs === 4) bgColor = "bg-yellow-500";
-            else if (ball.runs === 6) bgColor = "bg-purple-500";
-          } else if (ball.type === "wicket") {
-            ballText = "W";
-            bgColor = "bg-red-500";
-          } else if (ball.type === "extra") {
-            ballText = "E";
-            bgColor = "bg-orange-500";
-          } else if (ball.type === "run+wicket") {
-            ballText = "1+W";
-            bgColor = "bg-red-800";
-          }
-
-          ballDiv.textContent = ballText;
-          ballDiv.classList.add(bgColor);
-          ballsTimelineContainer.appendChild(ballDiv);
-
-          // Add a separator at the end of each over
-          if (
-            (index + 1) % 6 === 0 &&
-            index < currentTeamBallsTimeline.length - 1
-          ) {
-            const separator = document.createElement("div");
-            separator.className =
-              "flex-shrink-0 w-4 text-center font-bold text-gray-400";
-            separator.textContent = "|";
-            ballsTimelineContainer.appendChild(separator);
-          }
-        });
-      }
-
-      // Initializes the chart
-      function initializeChart() {
-        const ctx = runsPerOverChartCanvas.getContext("2d");
-        runsPerOverChart = new Chart(ctx, {
-          type: "line",
-          data: {
-            labels: [],
-            datasets: [
-              {
-                label: "Runs per Over",
-                data: [],
-                borderColor: "rgb(75, 192, 192)",
-                tension: 0.1,
-                fill: false,
-              },
-            ],
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-              y: {
-                beginAtZero: true,
-              },
-            },
-          },
-        });
-      }
-
-      // Updates the chart with current data
-      function updateChart() {
-        const currentTeamTimeline =
-          state.currentInning === 1
-            ? state.team1.oversTimeline
-            : state.team2.oversTimeline;
-        const labels = currentTeamTimeline.map(
-          (_, index) => `Over ${index + 1}`
-        );
-        const data = currentTeamTimeline.map((over) => over.runs);
-
-        runsPerOverChart.data.labels = labels;
-        runsPerOverChart.data.datasets[0].data = data;
-        runsPerOverChart.update();
-      }
-
-      // Functions to handle the shareable link
-      function updateShareableLink() {
-        const encodedState = btoa(JSON.stringify(state));
-        const url = `${window.location.protocol}//${window.location.host}${window.location.pathname}?state=${encodedState}`;
-        shareLinkInput.value = url;
-        history.replaceState(state, "", url);
-      }
-
-      function copyShareableLink() {
-        shareLinkInput.select();
-        shareLinkInput.setSelectionRange(0, 99999);
-        document.execCommand("copy");
-        alert("Link copied to clipboard!");
-      }
-
-      // Modal functions
-      function showNextInningModal() {
-        nextInningModal.classList.remove("hidden");
-      }
-
-      function hideNextInningModal() {
-        nextInningModal.classList.add("hidden");
-      }
-
-      function showResetModal() {
-        resetModal.classList.remove("hidden");
-      }
-
-      function hideResetModal() {
-        resetModal.classList.add("hidden");
-      }
-
-      // Initial setup function to check for URL state
-      function initializeGame() {
-        const urlParams = new URLSearchParams(window.location.search);
-        const encodedState = urlParams.get("state");
-
-        if (encodedState) {
-          try {
-            const decodedState = JSON.parse(atob(encodedState));
-            // Restore complex objects
-            state = { ...state, ...decodedState };
-
-            // Ensure deep copies for nested objects to avoid reference issues
-            state.team1 = {
-              ...state.team1,
-              ...decodedState.team1,
-              oversTimeline: [...decodedState.team1.oversTimeline],
-              ballsTimeline: [...decodedState.team1.ballsTimeline],
-            };
-            state.team2 = {
-              ...state.team2,
-              ...decodedState.team2,
-              oversTimeline: [...decodedState.team2.oversTimeline],
-              ballsTimeline: [...decodedState.team2.ballsTimeline],
-            };
-            state.scoreHistory = [...decodedState.scoreHistory];
-
-            startScreenContainer.classList.add("hidden");
-            scorecardContainer.classList.remove("hidden");
-            renderState();
-            updateShareableLink();
-          } catch (e) {
-            console.error("Failed to decode game state from URL:", e);
-            startScreenContainer.classList.remove("hidden");
-            scorecardContainer.classList.add("hidden");
-          }
-        } else {
-          startScreenContainer.classList.remove("hidden");
-          scorecardContainer.classList.add("hidden");
+      function closeWinnerModal() {
+        document.getElementById("winner-modal").classList.add("hidden");
+        if (confettiInterval) {
+          clearInterval(confettiInterval);
+          confettiInterval = null;
         }
       }
-
-      // Run initial setup
-      initializeChart();
-      initializeGame();
+      function triggerConfetti(amount = 50) {
+        const colors = [
+          "#ef4444",
+          "#3b82f6",
+          "#10b981",
+          "#f59e0b",
+          "#8b5cf6",
+          "#ffffff",
+        ];
+        const container = document.getElementById("confetti-container");
+        for (let i = 0; i < amount; i++) {
+          const conf = document.createElement("div");
+          conf.className = "confetti";
+          conf.style.left = Math.random() * 100 + "vw";
+          conf.style.backgroundColor =
+            colors[Math.floor(Math.random() * colors.length)];
+          conf.style.animation = `confetti-fall ${
+            Math.random() * 2 + 2
+          }s linear forwards`;
+          container.appendChild(conf);
+          setTimeout(() => conf.remove(), 4000);
+        }
+      }
+      function formatOvers(balls) {
+        return `${Math.floor(balls / 6)}.${balls % 6}`;
+      }
+      function calcRR(runs, balls) {
+        if (balls === 0) return "0.0";
+        return ((runs / balls) * 6).toFixed(1);
+      }
     </script>
   </body>
 </html>
